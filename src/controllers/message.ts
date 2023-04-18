@@ -5,6 +5,7 @@ import type { RequestHandler } from 'express';
 import { logger, prisma } from '../shared';
 import { delay as delayMs } from '../utils';
 import { getSession, jidExists } from '../wa';
+import { uploadMedia, deleteMedia } from '../zap-util';
 
 export const list: RequestHandler = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ export const list: RequestHandler = async (req, res) => {
         skip: cursor ? 1 : 0,
         where: { sessionId },
       })
-    ).map((m) => serializePrisma(m));
+    ).map((m: any) => serializePrisma(m));
 
     res.status(200).json({
       data: messages,
@@ -42,6 +43,7 @@ export const send: RequestHandler = async (req, res) => {
     if (!exists) return res.status(400).json({ error: 'JID does not exists' });
 
     const result = await session.sendMessage(jid, message, options);
+    deleteMedia(message);
     res.status(200).json(result);
   } catch (e) {
     const message = 'An error occured during message send';
@@ -101,5 +103,17 @@ export const download: RequestHandler = async (req, res) => {
     const message = 'An error occured during message media download';
     logger.error(e, message);
     res.status(500).json({ error: message });
+  }
+};
+
+export const upload: RequestHandler = async (req, res) => {
+  try {
+    const data = await uploadMedia(req);
+    const message = 'Meta data successfully.';
+    res.status(200).json({message, data});
+  } catch (err) {
+    res.status(404).json({
+      error: "Could not upload the media from message." + err
+    })
   }
 };

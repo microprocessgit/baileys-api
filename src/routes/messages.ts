@@ -37,4 +37,9 @@ router.post(
   controller.download
 );
 
+router.post(
+  '/upload', 
+  body('stream').notEmpty(), 
+  controller.upload )
+
 export default router;
