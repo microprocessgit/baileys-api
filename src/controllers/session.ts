@@ -7,6 +7,7 @@ import {
   listSessions,
   sessionExists,
 } from '../wa';
+import { clientListExists, updateClients, insertClients } from '../zap-util';
 
 export const list: RequestHandler = (req, res) => {
   res.status(200).json(listSessions());
@@ -22,9 +23,18 @@ export const status: RequestHandler = (req, res) => {
 
 export const add: RequestHandler = async (req, res) => {
   const { sessionId, readIncomingMessages, ...socketConfig } = req.body;
-
-  if (sessionExists(sessionId)) return res.status(400).json({ error: 'Session already exists' });
-  createSession({ sessionId, res, readIncomingMessages, socketConfig });
+ 
+  insertClients();
+  if (sessionExists(sessionId)){
+    updateClients(req);
+    return res.status(400).json({ error: 'Session already exists' })
+  }
+   
+  else if (clientListExists(req)) {
+    createSession({ sessionId, res, readIncomingMessages, socketConfig });
+    updateClients(req);
+  }else
+    return res.status(406).json({ error: 'Authentication failed.' }); 
 };
 
 export const addSSE: RequestHandler = async (req, res) => {

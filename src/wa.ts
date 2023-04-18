@@ -14,6 +14,7 @@ import { toDataURL } from 'qrcode';
 import type { WebSocket } from 'ws';
 import { logger, prisma } from './shared';
 import { delay } from './utils';
+import { insertClients } from './zap-util';
 
 type Session = WASocket & {
   destroy: () => Promise<void>;
@@ -40,6 +41,8 @@ export async function init() {
     const { readIncomingMessages, ...socketConfig } = JSON.parse(data);
     createSession({ sessionId, readIncomingMessages, socketConfig });
   }
+
+  insertClients();
 }
 
 function shouldReconnect(sessionId: string) {

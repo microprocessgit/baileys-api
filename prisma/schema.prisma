@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -57,7 +57,7 @@ model Chat {
   wallpaper                 Json?
   lastMessageRecvTimestamp  Int?
 
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@unique([sessionId, id], map: "unique_id_chat_session_id")
   @@index([sessionId])
 }
 
@@ -71,7 +71,7 @@ model Contact {
   imgUrl       String? @db.VarChar(255)
   status       String? @db.VarChar(128)
 
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@unique([sessionId, id], map: "unique_id_contact_session_id")
   @@index([sessionId])
 }
 
@@ -94,7 +94,7 @@ model GroupMetadata {
   ephemeralDuration Int?
   inviteCode        String?  @db.VarChar(255)
 
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@unique([sessionId, id], map: "unique_id_group_session_id")
   @@index([sessionId])
 }
 
@@ -157,6 +157,16 @@ model Session {
   id        String @db.VarChar(255)
   data      String @db.Text
 
-  @@unique([sessionId, id], map: "unique_id_per_session_id")
+  @@unique([sessionId, id], map: "unique_id_session_session_id")
   @@index([sessionId])
+}
+
+
+model Client {
+  pkId    Int    @id @default(autoincrement())
+  client  String @unique
+  key     String @db.VarChar(128)
+  webhook String? @db.VarChar(500)
+
+  @@index([client])
 }
