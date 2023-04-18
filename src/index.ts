@@ -3,10 +3,12 @@ import 'dotenv/config';
 import express from 'express';
 import routes from './routes';
 import { init } from './wa';
+import views from './clients/views'
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/app', views);
 app.use('/', routes);
 app.all('*', (req, res) => res.status(404).json({ error: 'URL not found' }));
 
