@@ -15,6 +15,7 @@ import type { WebSocket } from 'ws';
 import { logger, prisma } from './shared';
 import { delay } from './utils';
 import { insertClients } from './zap-util';
+import { webhook } from './services/webhook';
 
 type Session = WASocket & {
   destroy: () => Promise<void>;
@@ -112,6 +113,7 @@ export async function createSession(options: createSessionOptions) {
         try {
           const qr = await toDataURL(connectionState.qr);
           res.status(200).json({ qr });
+          webhook(sessionId, 'connection/qrcode', { image: qr})
           return;
         } catch (e) {
           logger.error(e, 'An error occured during QR generation');
@@ -138,7 +140,7 @@ export async function createSession(options: createSessionOptions) {
       destroy();
       return;
     }
-
+    webhook(sessionId, 'connection/qrcode', { image: qr})
     const data = { ...connectionState, qr };
     if (qr) SSEQRGenerations.set(sessionId, currentGenerations + 1);
     res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -176,18 +178,24 @@ export async function createSession(options: createSessionOptions) {
     if (connection === 'open') {
       retries.delete(sessionId);
       SSEQRGenerations.delete(sessionId);
+      webhook(sessionId,  'connection/open', update)
     }
-    if (connection === 'close') handleConnectionClose();
+    if (connection === 'close'){
+      handleConnectionClose();
+      webhook(sessionId,  'connection/close', update)
+    } 
+    
     handleConnectionUpdate();
   });
 
   if (readIncomingMessages) {
     socket.ev.on('messages.upsert', async (m) => {
       const message = m.messages[0];
+      webhook(sessionId, 'messages/upsert', m)
       if (message.key.fromMe || m.type !== 'notify') return;
 
       await delay(1000);
-      await socket.readMessages([message.key]);
+      //await socket.readMessages([message.key]);
     });
   }
 

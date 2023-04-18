@@ -29,3 +29,14 @@ export function clientListExists(req: any) {
   })
   return (result == sessionKey);
 }
+
+export function getWebhook(client: any) {
+  let result = '';
+  clientsList.forEach((value, item) => {
+    if (item == client) {
+      result = value.webhook;
+    }
+  })
+
+  return result;
+}
